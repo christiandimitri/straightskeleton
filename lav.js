@@ -1,52 +1,58 @@
 class LAV {
-  constructor(path){
-    this.vertices = path.map((vector)=>{
+  constructor(path) {
+    this.vertices = path.map(vector => {
       return new Vertex(vector.x, vector.y);
     });
 
     connectVertices(this.vertices);
 
-    this.vertices.forEach((vertex)=>{
+    this.vertices.forEach(vertex => {
       vertex.bisector = computeBisector(vertex);
     });
 
-    this.queue = this.vertices.map((vertex)=>{
-      return findIntersection(vertex);
-    })
-    .filter((i)=>i!==undefined);
-
+    // this.queue = this.vertices
+    //   .map(vertex => {
+    //     return findIntersection(vertex);
+    //   })
+    //   .filter(i => i !== undefined);
+    this.queue = [];
+    for (let index = 0; index < this.vertices.length; index++) {
+      const vertex = this.vertices[index];
+      var intersection = findIntersection(vertex);
+      if (intersection !== undefined) {
+        this.queue.push(intersection);
+      }
+    }
     this.sortQueue();
 
     this.skeleton = [];
   }
 
-  sortQueue(){
-    this.queue.sort((a,b)=>{
+  sortQueue() {
+    this.queue.sort((a, b) => {
       return a.distanceToEdge - b.distanceToEdge;
     });
   }
 }
 
-function stepLAV(lav){
-  if(lav.queue.length<=0){
+function stepLAV(lav) {
+  if (lav.queue.length <= 0) {
     return;
   }
-
+  // inspectinggggggggggg
   const intersection = lav.queue.shift();
-  const {origins} = intersection;
+  const { origins } = intersection;
   const va = origins[0];
   const vb = origins[1];
 
-  if(va.active===false && vb.active===false){
-    console.log('skipping intersection');
-    return {intersection};
+  if (va.active === false && vb.active === false) {
+    console.log("skipping intersection");
+    return { intersection };
   }
-
-  // console.log(va, vb);
 
   //  Edge Event
 
-  if(va.prevVertex === vb.nextVertex){
+  if (va.prevVertex === vb.nextVertex) {
     lav.skeleton.push([va.position, intersection.position]);
     lav.skeleton.push([vb.position, intersection.position]);
     lav.skeleton.push([va.prevVertex.position, intersection.position]);
@@ -55,10 +61,9 @@ function stepLAV(lav){
     va.active = false;
     vb.active = false;
     va.prevVertex.active = false;
-    console.log('created three arcs, roof edge');
-    return {intersection};
+    console.log("created three arcs, roof edge");
+    return { intersection };
   }
-
 
   lav.skeleton.push([va.position, intersection.position]);
   lav.skeleton.push([vb.position, intersection.position]);
@@ -77,33 +82,27 @@ function stepLAV(lav){
   newVertex.nextEdge = [vb, vb.nextVertex];
 
   lav.vertices.push(newVertex);
-  //lav.vertices.splice(lav.vertices.indexOf(va),1);
-  //lav.vertices.splice(lav.vertices.indexOf(vb),1);
 
   newVertex.bisector = computeBisector(newVertex);
 
-  // lav.vertices.forEach((vertex)=>{
-  //   vertex.bisector = computeBisector(vertex);
-  // });
-
   const newIntersection = findIntersection(newVertex);
-  if(newIntersection!==undefined){
+  if (newIntersection !== undefined) {
     lav.queue.push(newIntersection);
   }
 
   lav.sortQueue();
-  console.log('create two arcs, edge event');
-  return {intersection, newVertex, newIntersection};
+  console.log("create two arcs, edge event");
+  return { intersection, newVertex, newIntersection };
 }
 
-function connectVertices(vertices){
-  vertices.forEach((vertex, index)=>{
-    let prevIndex = index-1;
-    if(prevIndex < 0){
-      prevIndex = vertices.length-1;
+function connectVertices(vertices) {
+  vertices.forEach((vertex, index) => {
+    let prevIndex = index - 1;
+    if (prevIndex < 0) {
+      prevIndex = vertices.length - 1;
     }
-    let nextIndex = index+1;
-    if(nextIndex >= vertices.length){
+    let nextIndex = index + 1;
+    if (nextIndex >= vertices.length) {
       nextIndex = 0;
     }
 
